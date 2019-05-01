@@ -1,8 +1,62 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useReducer } from "react";
+import axios from "axios";
+import logo from "./logo.svg";
+import "./App.css";
+const fetchCat = () => axios.get("https://aws.random.cat/meow");
 
-function App() {
+const initialState = {
+  isFetching: false,
+  cat: {},
+  count: 0
+};
+
+const reducer = (state, { type, payload }) => {
+  switch (type) {
+    case "FETCH_CAT_PENDING":
+      return {
+        ...state,
+        isFetching: true
+      };
+    case "FETCH_CAT_SUCCESS":
+      return {
+        ...state,
+        isFetching: false,
+        cat: payload
+      };
+    case "COUNTER_CLICK":
+      return {
+        ...state,
+        isFetching: false,
+        count: payload
+      };
+    default:
+      return state;
+  }
+};
+
+const App = () => {
+  const [{ cat, isFetching, count }, dispatch] = useReducer(
+    reducer,
+    initialState
+  );
+
+  useEffect(() => {
+    dispatch({
+      type: "FETCH_CAT_PENDING"
+    });
+
+    fetchCat().then(response => {
+      dispatch({
+        type: "FETCH_CAT_SUCCESS",
+        payload: response.data
+      });
+    });
+  }, []);
+
+  if (isFetching) {
+    return <p>Loading....</p>;
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -10,17 +64,31 @@ function App() {
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <p>You click {count} times</p>
+
+        <button
+          style={{
+            padding: "8px 16px",
+            borderRadius: 4,
+            fontSize: "1.25rem"
+          }}
+          onClick={() => {
+            dispatch({
+              type: "COUNTER_CLICK",
+              payload: count + 1
+            });
+          }}
         >
-          Learn React
-        </a>
+          Click me
+        </button>
+
+        <p>
+          <img src={cat && cat.file} alt="Cat" width="256" />
+        </p>
       </header>
     </div>
   );
-}
+};
 
 export default App;
